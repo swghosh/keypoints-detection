@@ -26,7 +26,7 @@ def get_keypoints(kp_file_path):
     return np.array(points, dtype=np.float32)
 
 
-@tf.function
+@tf.function(experimental_relax_shapes=True)
 def resize_image_and_adjust_keypoint(image, keypoints, target_height, target_width):
     """Resize an image using padding by maintaing it's aspect
     ratio. The associated keypoints for the image are also adjusted
@@ -90,7 +90,7 @@ def test_load_dataset_from_generator():
     ds = tf.data.Dataset.from_generator(lambda: ds_gen,
                                         output_signature=(
                                             tf.TensorSpec(shape=(224, 224, 3), dtype=tf.uint8),
-                                            tf.TensorSpec(shape=(68, 2), dtype=tf.uint8)))
+                                            tf.TensorSpec(shape=(68, 2), dtype=tf.float32)))
     ds = ds.cache()
     ds = ds.shuffle(shuffle_buffer)
     ds = ds.batch(batch_size)
