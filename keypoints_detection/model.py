@@ -34,7 +34,6 @@ ds = tf.data.Dataset.from_generator(lambda: dataset_gen,
                                                       dtype=tf.uint8),
                                         tf.TensorSpec(shape=(num_keypoints, keypoints_coords),
                                                       dtype=tf.float32)))
-ds = ds.cache()
 
 
 def preprocess_samples(image, keypoints):
@@ -47,8 +46,8 @@ ds = ds.shuffle(shuffle_buffer)
 ds = ds.map(preprocess_samples, tf.data.experimental.AUTOTUNE)
 
 train_samples = round(num_samples * train_split)
-train_ds = ds.take(train_samples)
-val_ds = ds.skip(train_samples)
+train_ds = ds.take(train_samples).cache()
+val_ds = ds.skip(train_samples).cache()
 
 train_ds, val_ds = train_ds.batch(batch_size), val_ds.batch(batch_size)
 
