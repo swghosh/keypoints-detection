@@ -1,4 +1,3 @@
-import math
 import tensorflow as tf
 from keypoints_detection import dataset
 
@@ -10,7 +9,7 @@ dataset_path = '../300w_cropped'
 batch_size = 32
 shuffle_buffer = 16
 epochs = 50
-train_split = 0.3
+train_split = 0.7
 num_samples = 600
 
 base_model = tf.keras.applications.ResNet50V2(include_top=False,
