@@ -33,7 +33,6 @@ def resize_image_and_adjust_keypoint(image, keypoints, target_height, target_wid
     original_size = tf.shape(image)[:-1]  # omit last axis for channels
     resized_image = tf.image.resize_with_pad(
         image, target_height, target_width)
-    new_size = tf.stack([target_height, target_width])
     
     min_dim = tf.argmin(original_size, axis=0)
     min_dim_bool = tf.math.equal(min_dim, 0)  # 0 when height is less than width, 1 otherwise
@@ -50,12 +49,12 @@ def resize_image_and_adjust_keypoint(image, keypoints, target_height, target_wid
         shorter_side = aspect_ratio * tf.cast(target_height, tf.float32)
         side_pad = target_width - shorter_side
         fin_size = tf.cast([target_height, shorter_side], tf.float32)
-    print(side_pad)
     padding_vec = padding_vec * (side_pad / 2)
 
     adjusted_keypoints = keypoints / tf.cast(original_size, tf.float32)
     adjusted_keypoints = adjusted_keypoints * fin_size 
     adjusted_keypoints = adjusted_keypoints + padding_vec
+    
     return resized_image, adjusted_keypoints
 
 
@@ -63,18 +62,15 @@ if __name__ == '__main__':
     import cv2
 
     image = cv2.imread(
-        "../300w_cropped/02_Outdoor/outdoor_278.png")
+        "../300w_cropped/02_Outdoor/outdoor_300.png")
     kp = get_keypoints(
-        "../300w_cropped/02_Outdoor/outdoor_278.pts")
-    print(image.shape)
-    print(kp)
+        "../300w_cropped/02_Outdoor/outdoor_300.pts")
 
     target_size = 224
     image, kp = resize_image_and_adjust_keypoint(image, kp, target_size, target_size)
     
     kp = kp.numpy().astype(np.int32)
     image = image.numpy().astype(np.uint8)
-    print(kp)
 
     for k in kp:
         image = cv2.circle(image, (k[0], k[1]), 2, (0, 0, 255), 2)
