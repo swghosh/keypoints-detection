@@ -26,6 +26,7 @@ def get_keypoints(kp_file_path):
     return np.array(points, dtype=np.float32)
 
 
+@tf.function
 def resize_image_and_adjust_keypoint(image, keypoints, target_height, target_width):
     """Resize an image using padding by maintaing it's aspect
     ratio. The associated keypoints for the image are also adjusted
@@ -68,6 +69,9 @@ def load_dataset_as_generator(dataset_path, target_image_size):
         kp_path = image_path.rstrip('.png') + '.pts'
         
         image = tf.image.decode_png(tf.io.read_file(image_path))
+        if image.shape[-1] != 3:
+            image = tf.image.grayscale_to_rgb(image)
+
         keypoints = get_keypoints(kp_path)
 
         image, keypoints = resize_image_and_adjust_keypoint(
@@ -83,16 +87,23 @@ def test_load_dataset_from_generator():
     shuffle_buffer = 50
 
     ds_gen = load_dataset_as_generator(dataset_path, target_image_size)
-    ds = tf.data.Dataset.from_generator(ds_gen,
-                                        [tf.uint8, tf.float32],
-                                        [(224, 224, 3), (68, 2)])
+    ds = tf.data.Dataset.from_generator(lambda: ds_gen,
+                                        output_signature=(
+                                            tf.TensorSpec(shape=(224, 224, 3), dtype=tf.uint8),
+                                            tf.TensorSpec(shape=(68, 2), dtype=tf.uint8)))
     ds = ds.cache()
     ds = ds.shuffle(shuffle_buffer)
     ds = ds.batch(batch_size)
+    
+    one_ds = ds.take(1)
+    for images, keypoints in one_ds:
+        pass
 
+    assert tf.reduce_all(tf.shape(images) == (batch_size, 224, 224, 3))
+    assert tf.reduce_all(tf.shape(keypoints) == (batch_size, 68, 2))
 
 def test_resize_image_and_adjust_keypoint():
-    # lazy import
+    # lazy import (dev dependency)
     import cv2
 
     image = cv2.imread(
@@ -108,4 +119,4 @@ def test_resize_image_and_adjust_keypoint():
 
     for k in kp:
         image = cv2.circle(image, (k[0], k[1]), 2, (0, 0, 255), 2)
-    cv2.imwrite('a.png', image)
+    cv2.imwrite('/tmp/a.png', image)
