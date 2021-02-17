@@ -34,6 +34,7 @@ def resize_image_and_adjust_keypoint(image, keypoints, target_height, target_wid
     original_size = tf.shape(image)[:-1]  # omit last axis for channels
     resized_image = tf.image.resize_with_pad(
         image, target_height, target_width)
+    resized_image = tf.cast(resized_image, image.dtype)  # convert back to original dtype
     
     min_dim = tf.argmin(original_size, axis=0)
     min_dim_bool = tf.math.equal(min_dim, 0)  # 0 when height is less than width, 1 otherwise
@@ -75,7 +76,23 @@ def load_dataset_as_generator(dataset_path, target_image_size):
         yield image, keypoints
 
 
-if __name__ == '__main__':
+def test_load_dataset_from_generator():
+    dataset_path = '../300w_cropped'
+    target_image_size = 224
+    batch_size = 128
+    shuffle_buffer = 50
+
+    ds_gen = load_dataset_as_generator(dataset_path, target_image_size)
+    ds = tf.data.Dataset.from_generator(ds_gen,
+                                        [tf.uint8, tf.float32],
+                                        [(224, 224, 3), (68, 2)])
+    ds = ds.cache()
+    ds = ds.shuffle(shuffle_buffer)
+    ds = ds.batch(batch_size)
+
+
+def test_resize_image_and_adjust_keypoint():
+    # lazy import
     import cv2
 
     image = cv2.imread(
