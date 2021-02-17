@@ -11,6 +11,7 @@ def get_keypoints(kp_file_path):
     Returns:
         an array of shape (68, 2)
     """
+
     with open(kp_file_path) as f:
         contents = f.read()
 
@@ -56,6 +57,22 @@ def resize_image_and_adjust_keypoint(image, keypoints, target_height, target_wid
     adjusted_keypoints = adjusted_keypoints + padding_vec
     
     return resized_image, adjusted_keypoints
+
+
+def load_dataset_as_generator(dataset_path, target_image_size):
+    """Load the 300w dataset as a generator with image and keypoints."""
+    
+    image_paths = tf.io.gfile.glob(dataset_path + '/*/*.png')
+    for image_path in image_paths:
+        kp_path = image_path.rstrip('.png') + '.pts'
+        
+        image = tf.image.decode_png(tf.io.read_file(image_path))
+        keypoints = get_keypoints(kp_path)
+
+        image, keypoints = resize_image_and_adjust_keypoint(
+            image, keypoints, target_image_size, target_image_size)
+        
+        yield image, keypoints
 
 
 if __name__ == '__main__':
