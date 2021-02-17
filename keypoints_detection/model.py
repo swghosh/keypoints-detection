@@ -52,7 +52,5 @@ val_ds = ds.skip(train_samples).cache()
 train_ds, val_ds = train_ds.batch(batch_size), val_ds.batch(batch_size)
 
 model.fit(train_ds,
-          steps_per_epoch=math.ceil(train_samples / batch_size),
           epochs=epochs,
-          validation_data=val_ds,
-          validation_steps=math.ceil((num_samples - train_samples) / batch_size))
+          validation_data=val_ds)
