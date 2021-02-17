@@ -1,3 +1,4 @@
+import math
 import tensorflow as tf
 from keypoints_detection import dataset
 
@@ -9,7 +10,8 @@ dataset_path = '../300w_cropped'
 batch_size = 32
 shuffle_buffer = 16
 epochs = 50
-validation_split = 0.3
+train_split = 0.3
+num_samples = 600
 
 base_model = tf.keras.applications.ResNet50V2(include_top=False,
                                               weights='imagenet',
@@ -43,6 +45,15 @@ def preprocess_samples(image, keypoints):
 
 ds = ds.shuffle(shuffle_buffer)
 ds = ds.map(preprocess_samples, tf.data.experimental.AUTOTUNE)
-ds = ds.batch(batch_size)
 
-model.fit(ds, epochs=epochs)
+train_samples = round(num_samples * train_split)
+train_ds = ds.take(train_samples)
+val_ds = ds.skip(train_samples)
+
+train_ds, val_ds = train_ds.batch(batch_size), val_ds.batch(batch_size)
+
+model.fit(train_ds,
+          steps_per_epoch=math.ceil(train_samples / batch_size),
+          epochs=epochs,
+          validation_data=val_ds,
+          validation_steps=math.ceil((num_samples - train_samples) / batch_size))
