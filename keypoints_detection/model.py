@@ -52,13 +52,12 @@ def prepare_and_get_dataset():
         keypoints = keypoints / image_size  # normalize keypoints scaling it by image size
         return image, keypoints
 
-    ds = ds.cache()
     ds = ds.shuffle(shuffle_buffer, seed=shuffle_seed, reshuffle_each_iteration=False)
     ds = ds.map(preprocess_samples, tf.data.experimental.AUTOTUNE)
 
     train_samples = round(num_samples * train_split)
-    train_ds = ds.take(train_samples)
-    val_ds = ds.skip(train_samples)
+    train_ds = ds.take(train_samples).cache()
+    val_ds = ds.skip(train_samples).cache()
 
     train_ds = train_ds.shuffle(
         shuffle_buffer,
