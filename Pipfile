@@ -9,6 +9,8 @@ tensorflow = "*"
 [dev-packages]
 pytest = "*"
 opencv-contrib-python = "*"
+pycodestyle = "*"
+rope = "*"
 
 [requires]
 python_version = "3.7"

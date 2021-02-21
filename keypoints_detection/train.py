@@ -18,10 +18,10 @@ cross_val_num_folds = 10
 def create_model(finetune=False):
     """Creates a ResNet50V2 model for keypoints detection."""
 
-    base_model = tf.keras.applications.ResNet50V2(include_top=False,
-                                                  weights='imagenet',
-                                                  input_shape=(image_size, image_size, 3),
-                                                  pooling='avg')
+    base_model = tf.keras.applications.ResNet50V2(
+        include_top=False, weights='imagenet',
+        input_shape=(image_size, image_size, 3),
+        pooling='avg')
     base_model.trainable = finetune
 
     model = tf.keras.Sequential([
@@ -38,30 +38,37 @@ def prepare_and_get_dataset():
     """Construct `tf.data.Dataset` pipeline(s) for training and
     validation splits and return them."""
 
-    ds = tf.data.Dataset.from_generator(lambda: dataset.load_dataset_as_generator(
-                                            dataset_path, image_size),
-                                        output_signature=(
-                                            tf.TensorSpec(shape=(image_size, image_size, 3),
-                                                        dtype=tf.uint8),
-                                            tf.TensorSpec(shape=(num_keypoints, keypoints_coords),
-                                                        dtype=tf.float32)))
+    ds = tf.data.Dataset.from_generator(
+        lambda: dataset.load_dataset_as_generator(
+            dataset_path, image_size),
+        output_signature=(tf.TensorSpec(shape=(image_size,
+                                               image_size,
+                                               3),
+                                        dtype=tf.uint8),
+                          tf.TensorSpec(shape=(num_keypoints,
+                                               keypoints_coords),
+                                        dtype=tf.float32)))
 
     def preprocess_samples(image, keypoints):
         image = tf.cast(image, tf.float32)
         image = tf.keras.applications.resnet_v2.preprocess_input(image)
-        keypoints = keypoints / image_size  # normalize keypoints scaling it by image size
+        # normalize keypoints scaling it by image size
+        keypoints = keypoints / image_size
         return image, keypoints
 
-    ds = ds.shuffle(shuffle_buffer, seed=shuffle_seed, reshuffle_each_iteration=False)
+    ds = ds.shuffle(shuffle_buffer,
+                    seed=shuffle_seed,
+                    reshuffle_each_iteration=False)
     ds = ds.map(preprocess_samples, tf.data.experimental.AUTOTUNE)
 
     train_samples = round(num_samples * train_split)
     train_ds = ds.take(train_samples).cache()
     val_ds = ds.skip(train_samples).cache()
 
+    # additionally, shuffle train samples
     train_ds = train_ds.shuffle(
         shuffle_buffer,
-        reshuffle_each_iteration=True).batch(batch_size)  # additionally, shuffle train samples
+        reshuffle_each_iteration=True).batch(batch_size)
     val_ds = val_ds.batch(batch_size)
 
     return train_ds, val_ds
