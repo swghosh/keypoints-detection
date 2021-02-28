@@ -1,3 +1,4 @@
+"""Convenience functions to load 300w dataset as tf.Dataset pipeline(s)."""
 import numpy as np
 import tensorflow as tf
 

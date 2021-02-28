@@ -1,3 +1,4 @@
+"""Train a Keras model to detect keypoints."""
 import tensorflow as tf
 from keypoints_detection import dataset
 
